@@ -23,6 +23,16 @@ from langchain_core.outputs import LLMResult
 
 log = logging.getLogger("agent_monitor.sdk")
 
+
+class _HideIntendedBlocks(logging.Filter):
+    """LangChain logs every callback exception; a ComplianceBlocked is intended, not an error."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "ComplianceBlocked" not in record.getMessage()
+
+
+logging.getLogger("langchain_core.callbacks.manager").addFilter(_HideIntendedBlocks())
+
 MAX_FIELD_CHARS = 4000
 
 
