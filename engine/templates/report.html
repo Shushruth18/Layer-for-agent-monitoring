@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Agent Monitor report {{ run.run_id }}</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 8pt; color: #888; } }
+  body { font-family: "Segoe UI", Helvetica, Arial, sans-serif; color: #1c1f23; font-size: 9.5pt; line-height: 1.4; }
+  h1 { font-size: 20pt; margin: 0; }
+  h2 { font-size: 12pt; margin: 18px 0 6px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
+  .muted { color: #666; }
+  .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #1c1f23; padding-bottom: 8px; }
+  .cards { display: flex; gap: 10px; margin-top: 12px; }
+  .card { flex: 1; border: 1px solid #ddd; border-radius: 6px; padding: 8px 10px; }
+  .card .n { font-size: 20pt; font-weight: 700; }
+  .card.block .n { color: #b42318; } .card.flag .n { color: #b54708; }
+  table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  th { text-align: left; font-size: 8pt; text-transform: uppercase; color: #666; border-bottom: 1px solid #bbb; padding: 4px; }
+  td { vertical-align: top; border-bottom: 1px solid #eee; padding: 5px 4px; }
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 8pt; font-weight: 600; color: #fff; white-space: nowrap; }
+  .badge.block { background: #b42318; } .badge.flag { background: #b54708; }
+  .summary { font-family: Consolas, monospace; font-size: 7.5pt; color: #555; word-break: break-all; }
+  .box { border: 1px solid #c7d2fe; background: #eef2ff; border-radius: 6px; padding: 10px 12px; margin-top: 8px; }
+  .box table td { border: none; padding: 2px 4px; }
+  .privacy { border-left: 3px solid #1c1f23; padding: 6px 10px; background: #f6f6f6; margin-top: 8px; }
+  .none { padding: 12px; text-align: center; color: #067647; border: 1px dashed #9ad3b4; border-radius: 6px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>Agent Monitor</h1>
+      <div class="muted">Compliance report: GDPR, EU AI Act and company policy</div>
+    </div>
+    <div class="muted" style="text-align:right">
+      Run <b>{{ run.run_id }}</b><br>
+      Started {{ run.started_at }}{% if run.ended_at %} · ended {{ run.ended_at }}{% endif %}
+    </div>
+  </div>
+
+  <h2>Summary</h2>
+  <div class="cards">
+    <div class="card"><div class="muted">Steps checked</div><div class="n">{{ run.checked }}</div></div>
+    <div class="card flag"><div class="muted">Flagged</div><div class="n">{{ run.flagged }}</div></div>
+    <div class="card block"><div class="muted">Blocked</div><div class="n">{{ run.blocked }}</div></div>
+    <div class="card"><div class="muted">Status</div><div class="n" style="font-size:13pt;padding-top:6px">{{ run.status }}</div></div>
+  </div>
+
+  <h2>Violations</h2>
+  {% if violations %}
+  <table>
+    <thead><tr><th>Step</th><th>Decision</th><th>Article</th><th>What happened (plain English)</th></tr></thead>
+    <tbody>
+    {% for v in violations %}
+      <tr>
+        <td>{{ v.step }}<br><span class="muted">{{ v.tool or v.type }}</span></td>
+        <td><span class="badge {{ v.decision }}">{{ v.decision|upper }}</span><br><span class="muted">{{ v.severity }}</span></td>
+        <td><b>{{ v.framework }}</b><br>{{ v.article }}</td>
+        <td>{{ v.explanation }}
+          <div class="summary">{{ v.redacted_summary }}</div>
+          <div class="muted" style="font-size:7.5pt">checked by {{ v.checked_by }} · via {{ v.source }}</div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="none">No violations detected in this run.</div>
+  {% endif %}
+
+  <h2>LLM usage via Otari</h2>
+  <div class="box">
+    <table>
+      <tr><td></td><td><b>Tokens</b></td><td><b>Cost (USD)</b></td></tr>
+      <tr><td>Agent (doing the work)</td><td>{{ "{:,}".format(run.agent_tokens) }}</td><td>${{ "%.6f"|format(run.agent_cost) }}</td></tr>
+      <tr><td>Compliance judge ({{ run.judge_calls }} call{{ '' if run.judge_calls == 1 else 's' }})</td><td>{{ "{:,}".format(run.judge_tokens) }}</td><td>${{ "%.6f"|format(run.judge_cost) }}</td></tr>
+      <tr><td><b>Compliance overhead</b></td><td colspan="2"><b>{{ overhead }}</b> of agent LLM cost</td></tr>
+    </table>
+    <div class="muted" style="font-size:8pt;margin-top:4px">
+      All model calls are routed through Mozilla.ai's Otari gateway with separate virtual keys and budgets
+      for the agent and the judge. Most checks are deterministic rules and cost nothing; the judge LLM is only
+      asked when no rule fires but personal data is present, and verdicts are cached.
+    </div>
+  </div>
+
+  <h2>Privacy note</h2>
+  <div class="privacy">
+    Agent Monitor stores <b>only violations</b>, never clean steps, and never the raw input of any step.
+    Each summary above was anonymised with Microsoft Presidio before storage; names, emails, phone numbers
+    and special-category terms are replaced by placeholders such as &lt;PERSON&gt;. The judge LLM also only
+    ever receives redacted text.
+  </div>
+
+  <p class="muted" style="margin-top:18px;font-size:8pt">
+    Generated {{ generated_at }} by Agent Monitor. This report supports, but does not replace, review by your Data Protection Officer.
+  </p>
+</body>
+</html>
