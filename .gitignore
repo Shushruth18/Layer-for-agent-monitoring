@@ -9,3 +9,4 @@ node_modules/
 .next/
 .vercel/
 tests/out/
+store/*.log
