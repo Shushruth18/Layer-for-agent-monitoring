@@ -1,0 +1,67 @@
+{
+  "version": "2.0.0",
+  "options": { "env": { "PYTHONUTF8": "1" } },
+  "tasks": [
+    {
+      "label": "Engine 8000",
+      "type": "shell",
+      "command": "${workspaceFolder}\.venv\Scripts\python.exe -m uvicorn engine.main:app --port 8000",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "group": "services" }
+    },
+    {
+      "label": "Tools 8100",
+      "type": "shell",
+      "command": "${workspaceFolder}\.venv\Scripts\python.exe -m mcp_tools.server",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "group": "services" }
+    },
+    {
+      "label": "Gateway 8200",
+      "type": "shell",
+      "command": "${workspaceFolder}\.venv\Scripts\python.exe -m gateway.server",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "group": "services" }
+    },
+    {
+      "label": "Dashboard 3000",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/dashboard" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "group": "services" }
+    },
+    {
+      "label": "Run Agent",
+      "type": "shell",
+      "command": "${workspaceFolder}\.venv\Scripts\python.exe -m agent.run",
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "focus": true }
+    },
+    {
+      "label": "Run Agent no monitor",
+      "type": "shell",
+      "command": "${workspaceFolder}\.venv\Scripts\python.exe -m agent.run --no-monitor",
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "focus": true }
+    },
+    {
+      "label": "Tunnel",
+      "type": "shell",
+      "command": "cloudflared tunnel --url http://localhost:8000",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated" }
+    },
+    {
+      "label": "Start All",
+      "dependsOn": ["Engine 8000", "Tools 8100", "Gateway 8200", "Dashboard 3000"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}

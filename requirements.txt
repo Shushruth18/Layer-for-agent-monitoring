@@ -1,0 +1,23 @@
+# Top-level deps. Exact pins live in requirements.lock.txt (install with: pip install -r requirements.lock.txt).
+# Pins marked SAC are older builds that Windows Smart App Control allows to load.
+langchain
+langgraph
+langchain-openai
+langchain-mcp-adapters
+openai
+mcp[cli]<2          # v1 keeps `from mcp.server.fastmcp import FastMCP`
+fastapi
+uvicorn
+httpx
+pydantic
+python-dotenv
+presidio-analyzer
+presidio-anonymizer
+jinja2
+weasyprint
+pytest
+pyyaml
+spacy==3.8.7        # SAC
+srsly==2.5.1        # SAC
+xxhash==3.6.0       # SAC
+ormsgpack==1.12.2   # SAC
